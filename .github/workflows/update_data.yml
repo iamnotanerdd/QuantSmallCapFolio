@@ -1,0 +1,40 @@
+name: Update Quant Data
+
+on:
+  schedule:
+    # Run at 00:00 UTC on the 5th of every month
+    - cron: '0 0 5 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Run Quant Downloader
+      run: python Quant_SmallCap/quant_downloader.py
+      
+    - name: Run Quant Aggregator
+      run: python Quant_SmallCap/quant_aggregator.py
+      
+    - name: Commit and Push changes
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Auto-update Quant monthly data [skip ci]"
+        file_pattern: "Quant_SmallCap/**"
